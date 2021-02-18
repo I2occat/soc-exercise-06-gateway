@@ -12,9 +12,14 @@ public class SocGatewayConfig {
     public RouteLocator configGateway(RouteLocatorBuilder routeLocatorBuilder) {
         return routeLocatorBuilder.routes()
                 .route("product", r -> r.path("/api/v1/product*", "/api/v1/product/**")
-                        .uri("lb://socproduct"))
+                    .uri("lb://socproduct"))
                 .route("customer", r -> r.path("/api/v1/customer/**")
-                        .uri("lb://soccustomer"))
+                    .filters(f -> f.circuitBreaker(c -> c.setName("soccustomerCircuitBreaker")
+                        .setFallbackUri("forward:/api/v1/soccustomerfallback")
+                        .setRouteId("soccustomerRouteFallback")))
+                    .uri("lb://soccustomer"))
+                .route("soccustomerfallback", r -> r.path("/api/v1/soccustomerfallback*", "/api/v1/soccustomerfallback/**")
+                        .uri("lb://soccustomerfallback"))
                 .build();
     }
 }
